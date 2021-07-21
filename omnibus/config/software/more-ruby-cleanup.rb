@@ -43,7 +43,7 @@ build do
 
   block "Removing additional non-code files from installed gems" do
     # find the embedded ruby gems dir and clean it up for globbing
-    target_dir = "#{install_dir}/embedded/lib/ruby/gems/*/gems".tr('\\', "/")
+    target_dir = "#{install_dir}/embedded/lib/ruby/gems/*/gems".tr("\\", "/")
     files = %w{
       .rspec-tm
       .sitearchdir.time
@@ -66,7 +66,6 @@ build do
       script
       site
       vendor
-      VERSION
     }
 
     Dir.glob("#{target_dir}/*/{#{files.join(",")}}").each do |f|
@@ -80,9 +79,20 @@ build do
     end
   end
 
+  block "Removing VERSION files from installed gems" do
+    # find the embedded ruby gems dir and clean it up for globbing
+    Dir.glob("#{install_dir}/embedded/lib/ruby/gems/*/gems/*/VERSION".tr("\\", "/")).each do |f|
+      # we need to not delete the aws SDK VERSION file
+      next if File.basename(File.expand_path("..", f)).start_with?("aws")
+
+      puts "Deleting #{f}"
+      FileUtils.rm_rf(f)
+    end
+  end
+
   block "Removing Gemspec / Rakefile / Gemfile unless there's a bin dir / not a chef gem" do
     # find the embedded ruby gems dir and clean it up for globbing
-    target_dir = "#{install_dir}/embedded/lib/ruby/gems/*/gems".tr('\\', "/")
+    target_dir = "#{install_dir}/embedded/lib/ruby/gems/*/gems".tr("\\", "/")
     files = %w{
       Gemfile
       Rakefile
@@ -102,7 +112,7 @@ build do
   end
 
   block "Removing spec dirs from non-Chef gems" do
-    Dir.glob("#{install_dir}/embedded/lib/ruby/gems/*/gems/*/spec".tr('\\', "/")).each do |f|
+    Dir.glob("#{install_dir}/embedded/lib/ruby/gems/*/gems/*/spec".tr("\\", "/")).each do |f|
       # if we're in a chef- gem then don't remove the specs
       next if File.basename(File.expand_path("..", f)).start_with?("chef-")
 
@@ -128,16 +138,6 @@ build do
         FileUtils.rm_f(file_path)
       else
         puts "Binary #{file_path} not found. Skipping."
-      end
-    end
-  end
-
-  block "Remove deprecated fauxhai dumps we don't need for running chef-utils specs" do
-    require "json"
-    Dir.glob("#{install_dir}/embedded/lib/ruby/gems/*/gems/fauxhai*/lib/fauxhai/platforms/**/*.json") do |file_path|
-      if JSON.parse(File.read(file_path))["deprecated"]
-        puts "Deleted deprecated Fauxhai definition at #{file_path}"
-        FileUtils.rm_f(file_path)
       end
     end
   end

@@ -174,6 +174,9 @@ class Chef
     class CannotDetermineWindowsInstallerType < Package; end
     class NoWindowsPackageSource < Package; end
 
+    # for example, if both recipes/default.yml, recipes/default.yaml are present
+    class AmbiguousYAMLFile < RuntimeError; end
+
     # Can not create staging file during file deployment
     class FileContentStagingError < RuntimeError
       def initialize(errors)
@@ -285,6 +288,28 @@ class Chef
         end
       end
 
+    end
+
+    class Secret
+      class RetrievalError < RuntimeError; end
+      class ConfigurationInvalid < RuntimeError; end
+      class FetchFailed < RuntimeError; end
+      class MissingSecretName < RuntimeError; end
+      class InvalidSecretName < RuntimeError; end
+
+      class InvalidFetcherService < RuntimeError
+        def initialize(given, fetcher_service_names)
+          super("#{given} is not a supported secrets service.  Supported services are: :#{fetcher_service_names.join(" :")}")
+        end
+      end
+
+      class MissingFetcher < RuntimeError
+        def initialize(fetcher_service_names)
+          super("No secret service provided. Supported services are: :#{fetcher_service_names.join(" :")}")
+        end
+      end
+
+      class MissingVaultName < RuntimeError; end
     end
 
     # Exception class for collecting multiple failures. Used when running

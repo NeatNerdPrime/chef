@@ -29,7 +29,7 @@ class Chef
       examples <<~DOC
       **Bare minimum #{ChefUtils::Dist::Infra::PRODUCT} client.rb**:
 
-      The absolute minimum configuration necessary for a node to communicate with the Infra Server is the URL of the Infra Server. All other configuration options either have values at the server side (Policyfiles, Roles, Environments, etc) or have default values determined at client startup.
+      The absolute minimum configuration necessary for a node to communicate with the #{ChefUtils::Dist::Server::PRODUCT} is the URL of the #{ChefUtils::Dist::Server::PRODUCT}. All other configuration options either have values at the server side (Policyfiles, Roles, Environments, etc) or have default values determined at client startup.
 
       ```ruby
       chef_client_config 'Create client.rb' do
@@ -139,7 +139,7 @@ class Chef
         DESC
 
       property :formatters, Array,
-        description: "",
+        description: "Client logging formatters to load.",
         default: []
 
       property :event_loggers, Array,
@@ -184,6 +184,10 @@ class Chef
         coerce: proc { |x| x.map { |v| string_to_symbol(v).capitalize } },
         default: []
 
+      property :policy_persist_run_list, [true, false],
+        description: "Override run lists defined in a Policyfile with the `run_list` defined on the #{ChefUtils::Dist::Server::PRODUCT}.",
+        introduced: "17.3"
+
       property :minimal_ohai, [true, false],
         description: "Run a minimal set of Ohai plugins providing data necessary for the execution of #{ChefUtils::Dist::Infra::PRODUCT}'s built-in resources. Setting this to true will skip many large and time consuming data sets such as `cloud` or `packages`. Setting this this to true may break cookbooks that assume all Ohai data will be present."
 
@@ -227,7 +231,7 @@ class Chef
       property :additional_config, String,
         description: "Additional text to add at the bottom of the client.rb config. This can be used to run custom Ruby or to add less common config options"
 
-      action :create, description: "Create a client.rb config file" do
+      action :create, description: "Create a client.rb config file for configuring #{ChefUtils::Dist::Infra::PRODUCT}." do
         unless ::Dir.exist?(new_resource.config_directory)
           directory new_resource.config_directory do
             user new_resource.user unless new_resource.user.nil?
@@ -277,14 +281,15 @@ class Chef
             report_handlers: format_handler(new_resource.report_handlers),
             ssl_verify_mode: new_resource.ssl_verify_mode,
             start_handlers: format_handler(new_resource.start_handlers),
-            additional_config: new_resource.additional_config
+            additional_config: new_resource.additional_config,
+            policy_persist_run_list: new_resource.policy_persist_run_list
           )
           mode "0640"
           action :create
         end
       end
 
-      action :remove, description: "Remove a client.rb config file" do
+      action :remove, description: "Remove a client.rb config file for configuring #{ChefUtils::Dist::Infra::PRODUCT}." do
         file ::File.join(new_resource.config_directory, "client.rb") do
           action :delete
         end

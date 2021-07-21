@@ -97,8 +97,7 @@ namespace :docs_site do
     # and removing any nil values since those are less types in properties
     # and more side effects of legacy design
     # @return String
-    # TODO:
-    # - still does not include nil (?)
+    # @todo still does not include nil (?)
     def friendly_types_list(arr)
       fixed_arr = Array(arr).map do |x|
         case x
@@ -108,6 +107,8 @@ namespace :docs_site do
           "false"
         when "NilClass"
           nil
+        when "ChefUtils::Mash"
+          "Mash (Hash-like)"
         else
           x
         end
@@ -138,8 +139,7 @@ namespace :docs_site do
       actions
     end
 
-    # TODO:
-    # - what to do about "lazy default" for default?
+    # @todo what to do about "lazy default" for default?
     def properties_list(properties)
       properties.filter_map do |property|
         next if property["name"] == "sensitive" # we don't need to document sensitive twice
@@ -236,9 +236,9 @@ namespace :docs_site do
 
         case preface
         when "Note:"
-          description << { "note" => [element] }
+          description << { "note" => element }
         when "Warning:"
-          description << { "warning" => [element] }
+          description << { "warning" => element }
         when nil
           description << element
         else
